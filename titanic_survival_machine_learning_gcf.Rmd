@@ -182,18 +182,10 @@ train_age <- titanic %>%
   filter(!is.na(age))
 
 # Run decision tree on training dataset with known ages
-complexity_parameter <- 0.01
 fit_age <- rpart(age ~ pclass + sex + sib_sp + parch + fare + embarked,
                  data = train_age,
                  method = "anova", 
-                 control = rpart::rpart.control(minsplit = 20, cp = complexity_parameter, maxdepth = 30)) # regression tree
-
-# Check optimal Complexity Parameter is used
-rpart::plotcp(fit_age)
-optimal_index <- which.min(fit_age$cptable[, "xerror"])
-complexity_parameter_optimal <- fit_age$cptable[optimal_index, "CP"]
-assert_that(near(complexity_parameter_optimal, complexity_parameter),
-                        msg = str_glue("Optimal Complexity Parameter {complexity_parameter_optimal} not used"))
+                 control = rpart::rpart.control(minsplit = 20, cp = 0.01, maxdepth = 30)) # regression tree
 
 # Update missing ages with predicted ages
 test_age <- titanic %>% 
@@ -358,13 +350,12 @@ tidy(fit_survived) %>%
 
 ```{r eval=FALSE, fig.width=8}
 model_name <- "decision_tree"
-complexity_parameter = 0.01
 
 # Run decision tree on training dataset with known survival
 fit_survived <- rpart::rpart(survived ~ title_bins + age + pclass + sib_sp,
                       data = train_survived,
                       method = "class",  # classification tree
-                      control = rpart::rpart.control(minsplit = 20, cp = complexity_parameter, maxdepth = 30)) %T>% 
+                      control = rpart::rpart.control(minsplit = 20, cp = 0.01, maxdepth = 30)) %T>% 
                 rattle::fancyRpartPlot()
 
 # Update missing survival with predicted survival
@@ -396,11 +387,6 @@ Using tuneRF function the optimal minimal OOB error for mtry is 2. From plotting
 ```{r eval=TRUE}
 model_name <- "random_forest"
 set.seed(415)
-
-# Optimise hyperparameter mtry
-optimise_rf <- randomForest::tuneRF(x = subset(train_survived, select = c(title_bins, age, pclass, sib_sp)),
-              y = train_survived$survived,
-              ntreeTry = 500)
   
 # Run random forest on training dataset with known survival
 fit_survived <- randomForest::randomForest(survived ~ title_bins + age + pclass + sib_sp,
@@ -457,43 +443,6 @@ test_survived %>%
   tabyl(survived) %>% 
   adorn_pct_formatting(digits = 1) 
 ```
-
-## Optimisation
-
-* Grid search
-
-Runs model on each combination of defined hyperparameters to find best hyperparameters as assessed against a validation dataset. Caret package can be used to perform a grid search, for example [Tuning Machine Learning Models Using the Caret R Package](https://machinelearningmastery.com/tuning-machine-learning-models-using-the-caret-r-package/)
-
-
-## Validation
-
-### Classification tree
-
-* Accuracy
-* Confusion matrix
-
-```{r eval=FALSE}
-caret::confusionMatrix(data = predicted_values, reference = actual_values)
-```
-
-* Log-loss
-* AUC
-
-```{r eval=FALSE}
-Metrics::auc(actual, predicted)
-```
-
-* Gini Index = Impurity Measure
-
-### Regression tree
-
-* Mean Absolute Error
-* Root Mean Square Error (Root mean squared deviation)
-
-```{r eval=FALSE}
-Metrics::rmse(actual = actual_values, predicted = predicted_values)
-```
-
 
 ### Kaggle submission
 

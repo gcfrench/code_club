@@ -1,7 +1,7 @@
 ---
 title: "Titanic survival machine learning analysis"
 author: Graham French
-date: '2018-04-26'
+date: '2018-05-03'
 output:
  html_document:
       keep_md: true
@@ -231,30 +231,11 @@ train_age <- titanic %>%
   filter(!is.na(age))
 
 # Run decision tree on training dataset with known ages
-complexity_parameter <- 0.01
 fit_age <- rpart(age ~ pclass + sex + sib_sp + parch + fare + embarked,
                  data = train_age,
                  method = "anova", 
-                 control = rpart::rpart.control(minsplit = 20, cp = complexity_parameter, maxdepth = 30)) # regression tree
+                 control = rpart::rpart.control(minsplit = 20, cp = 0.01, maxdepth = 30)) # regression tree
 
-# Check optimal Complexity Parameter is used
-rpart::plotcp(fit_age)
-```
-
-![](titanic_survival_machine_learning_gcf_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
-
-```r
-optimal_index <- which.min(fit_age$cptable[, "xerror"])
-complexity_parameter_optimal <- fit_age$cptable[optimal_index, "CP"]
-assert_that(near(complexity_parameter_optimal, complexity_parameter),
-                        msg = str_glue("Optimal Complexity Parameter {complexity_parameter_optimal} not used"))
-```
-
-```
-[1] TRUE
-```
-
-```r
 # Update missing ages with predicted ages
 test_age <- titanic %>% 
   filter(is.na(age)) %>% 
@@ -499,13 +480,12 @@ tidy(fit_survived) %>%
 
 ```r
 model_name <- "decision_tree"
-complexity_parameter = 0.01
 
 # Run decision tree on training dataset with known survival
 fit_survived <- rpart::rpart(survived ~ title_bins + age + pclass + sib_sp,
                       data = train_survived,
                       method = "class",  # classification tree
-                      control = rpart::rpart.control(minsplit = 20, cp = complexity_parameter, maxdepth = 30)) %T>% 
+                      control = rpart::rpart.control(minsplit = 20, cp = 0.01, maxdepth = 30)) %T>% 
                 rattle::fancyRpartPlot()
 
 # Update missing survival with predicted survival
@@ -538,26 +518,7 @@ Using tuneRF function the optimal minimal OOB error for mtry is 2. From plotting
 ```r
 model_name <- "random_forest"
 set.seed(415)
-
-# Optimise hyperparameter mtry
-optimise_rf <- randomForest::tuneRF(x = subset(train_survived, select = c(title_bins, age, pclass, sib_sp)),
-              y = train_survived$survived,
-              ntreeTry = 500)
-```
-
-```
-mtry = 2  OOB error = 17.85% 
-Searching left ...
-mtry = 1 	OOB error = 17.96% 
--0.006289308 0.05 
-Searching right ...
-mtry = 4 	OOB error = 18.97% 
--0.06289308 0.05 
-```
-
-![](titanic_survival_machine_learning_gcf_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
-
-```r
+  
 # Run random forest on training dataset with known survival
 fit_survived <- randomForest::randomForest(survived ~ title_bins + age + pclass + sib_sp,
                 data = train_survived,
@@ -577,14 +538,14 @@ Call:
                      Number of trees: 500
 No. of variables tried at each split: 2
 
-        OOB estimate of  error rate: 17.85%
+        OOB estimate of  error rate: 18.18%
 Confusion matrix:
     0   1 class.error
 0 489  60   0.1092896
-1  99 243   0.2894737
+1 102 240   0.2982456
 ```
 
-![](titanic_survival_machine_learning_gcf_files/figure-html/unnamed-chunk-25-2.png)<!-- -->![](titanic_survival_machine_learning_gcf_files/figure-html/unnamed-chunk-25-3.png)<!-- -->
+![](titanic_survival_machine_learning_gcf_files/figure-html/unnamed-chunk-25-1.png)<!-- -->![](titanic_survival_machine_learning_gcf_files/figure-html/unnamed-chunk-25-2.png)<!-- -->
 
 ```r
 # Update missing survival with predicted survival
@@ -605,8 +566,8 @@ test_survived %>%
 
 ```
  survived   n percent
-        0 265   63.4%
-        1 153   36.6%
+        0 268   64.1%
+        1 150   35.9%
 ```
 
 ### Conditional inference trees
@@ -645,46 +606,6 @@ test_survived %>%
         0 268   64.1%
         1 150   35.9%
 ```
-
-## Optimisation
-
-* Grid search
-
-Runs model on each combination of defined hyperparameters to find best hyperparameters as assessed against a validation dataset. Caret package can be used to perform a grid search, for example [Tuning Machine Learning Models Using the Caret R Package](https://machinelearningmastery.com/tuning-machine-learning-models-using-the-caret-r-package/)
-
-
-## Validation
-
-### Classification tree
-
-* Accuracy
-* Confusion matrix
-
-
-```r
-caret::confusionMatrix(data = predicted_values, reference = actual_values)
-```
-
-* Log-loss
-* AUC
-
-
-```r
-Metrics::auc(actual, predicted)
-```
-
-* Gini Index = Impurity Measure
-
-### Regression tree
-
-* Mean Absolute Error
-* Root Mean Square Error (Root mean squared deviation)
-
-
-```r
-Metrics::rmse(actual = actual_values, predicted = predicted_values)
-```
-
 
 ### Kaggle submission
 

@@ -1,0 +1,113 @@
+---
+title: TidyTuesday 2019 week 26 Global UFO sightings
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(magrittr)
+library(pheatmap)
+```
+
+> This script creates a heatmap of the number of UFO sightings in the UK for each day of the week
+
+```{r}
+purrr::walk(c(
+  "https://www.tidyverse.org/packages",
+  "https://dplyr.tidyverse.org/reference/index.html",
+  "https://tidyr.tidyverse.org/reference/index.html",
+  #"https://purrr.tidyverse.org/reference/index.html"
+  #"https://jennybc.github.io/purrr-tutorial/ls13_list-columns.html",
+  #"https://tibble.tidyverse.org/reference/index.html",
+  #"https://readr.tidyverse.org/reference/index.html",
+  #"https://stringr.tidyverse.org/reference/index.html",
+  "https://forcats.tidyverse.org/reference/index.html",
+  "https://lubridate.tidyverse.org/reference/index.html"
+  #"https://ggplot2.tidyverse.org/reference/index.html",
+  #"https://readxl.tidyverse.org/reference/index.html",
+  #"https://db.rstudio.com"
+),
+browseURL)
+```
+
+
+```{r}
+ufo_sightings_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-06-25/ufo_sightings.csv")
+```
+
+First of all I am only interested in UFO sightings in the UK. Filtering on the city_area field produces more sightings than using the country field
+
+```{r}
+ufo_sightings_uk <- ufo_sightings_raw %>% 
+  filter(str_detect(city_area, "uk/"))
+```
+
+This leaves us with 2,354 sightings. I am interested in counting the number of hourly sightings for each day, across all years so need to use the date_time column to extract days and hour columns.
+
+I couldn't find a quick way of converting the hours to 12 hour labels and resorted to using lubridate's am and pm functions, addeing the midnight and midday labels afterwards.
+
+Note I also set the start of the week as Monday rather than Sunday so that Sunday occurs at the end of the week. 
+
+```{r}
+ufo_sightings_uk_counts <- ufo_sightings_uk %>% 
+  transmute(date_time = parse_date_time(date_time, "mdy HM")) %>% 
+  mutate(hour = case_when(
+     am(date_time) ~ str_glue("{hour(date_time)} am"),
+     pm(date_time) ~ str_glue("{hour(date_time) -12} pm"),
+     TRUE ~ NA_character_
+  )) %>% 
+  mutate(hour = as.character(hour)) %>%
+  mutate(hour = case_when(
+     hour == "0 am" ~ "midnight",
+     hour == "0 pm" ~ "midday",
+     TRUE ~ hour
+  )) %>% 
+  mutate(weekday = wday(date_time, label = TRUE, 
+                        week_start = 1)) %>% # set Monday as the start of the week
+  select(-date_time)
+```
+
+Now to count the number of UFO sightings per hour for each weekday and spread dataset by weekdays
+
+```{r}
+ufo_sightings_uk_counts <- ufo_sightings_uk_counts %>%
+  group_by_all() %>% 
+  tally(name = "ufo_sightings") %>% 
+  ungroup()
+
+ufo_sightings_uk_counts <- ufo_sightings_uk_counts %>%
+  spread(weekday, ufo_sightings, fill = 0L) %T>% 
+  glimpse()
+```
+
+The data frame is now in the format needed to produce a heatmap, apart from the ordering of the hours is not what I would like
+
+To order the row going upwards from 1am to midnight I converted the hour column to an orderd factor giving the required order. To make midnight the first row I then had to reverse the order!
+
+```{r}
+hour_order <- c("1 am", "2 am", "3 am", "4 am", "5 am", "6 am", "7 am", "8 am", 
+                "9 am", "10 am", "11 am", "midday", 
+                "1 pm", "2 pm", "3 pm", "4 pm", "5 pm", "6 pm", "7 pm", "8 pm", 
+                "9 pm", "10 pm", "11 pm", "midnight")
+
+ufo_sightings_uk_counts <- ufo_sightings_uk_counts %>% 
+  mutate(hour = factor(hour, levels = hour_order)) %>% 
+  mutate(hour = fct_rev(hour)) %>% 
+  arrange(hour)
+```
+
+Now to create the heatmap
+
+```{r}
+ufo_matrix <- data.matrix(ufo_sightings_uk_counts)[, -1]
+rownames(ufo_matrix) <- ufo_sightings_uk_counts$hour
+pheatmap(ufo_matrix )
+```
+
+
+
+
+
+
+

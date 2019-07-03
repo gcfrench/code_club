@@ -13,26 +13,6 @@ library(pheatmap)
 > This script creates a heatmap of the number of UFO sightings in the UK for each day of the week
 
 ```{r}
-purrr::walk(c(
-  "https://www.tidyverse.org/packages",
-  "https://dplyr.tidyverse.org/reference/index.html",
-  "https://tidyr.tidyverse.org/reference/index.html",
-  #"https://purrr.tidyverse.org/reference/index.html"
-  #"https://jennybc.github.io/purrr-tutorial/ls13_list-columns.html",
-  #"https://tibble.tidyverse.org/reference/index.html",
-  #"https://readr.tidyverse.org/reference/index.html",
-  #"https://stringr.tidyverse.org/reference/index.html",
-  "https://forcats.tidyverse.org/reference/index.html",
-  "https://lubridate.tidyverse.org/reference/index.html"
-  #"https://ggplot2.tidyverse.org/reference/index.html",
-  #"https://readxl.tidyverse.org/reference/index.html",
-  #"https://db.rstudio.com"
-),
-browseURL)
-```
-
-
-```{r}
 ufo_sightings_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-06-25/ufo_sightings.csv")
 ```
 
@@ -102,9 +82,29 @@ Now to create the heatmap
 ```{r}
 ufo_matrix <- data.matrix(ufo_sightings_uk_counts)[, -1]
 rownames(ufo_matrix) <- ufo_sightings_uk_counts$hour
-pheatmap(ufo_matrix )
+ufo_uk_sightings <- pheatmap(mat = ufo_matrix, 
+                             cluster_row = FALSE, cluster_cols = FALSE,
+                             display_numbers = TRUE, number_format = "%.0f", 
+                             fontsize_number = 6, number_color = 'black',
+                             angle_col = 0,
+                             cellheight = 15, cellwidth = 30,
+                             gaps_row = 6, gaps_col = 5,
+                             border_color = 'black',
+                             legend = FALSE,
+                             main = "UFO sightings in the UK")
 ```
 
+Finally lets save the heatmap as a png image
+
+```{r}
+save_pheatmap <- function(x, filename, width = 1000, height = 1000, res = 150) {
+   png(filename, width = width, height = height, res = res)
+   grid::grid.newpage()
+   grid::grid.draw(x$gtable)
+   dev.off()
+}
+save_pheatmap(ufo_uk_sightings, "ufo_uk_sightings.png")
+```
 
 
 

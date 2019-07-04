@@ -8,9 +8,10 @@ library(tidyverse)
 library(lubridate)
 library(magrittr)
 library(pheatmap)
+library(RColorBrewer)
 ```
 
-> This script creates a heatmap of the number of UFO sightings in the UK for each day of the week
+> This script creates a heatmap of the number of UFO sightings in the UK for each day of the week.
 
 ```{r}
 ufo_sightings_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-06-25/ufo_sightings.csv")
@@ -77,9 +78,15 @@ ufo_sightings_uk_counts <- ufo_sightings_uk_counts %>%
   arrange(hour)
 ```
 
-Now to create the heatmap
+Now to create the heatmat using the pheatmap package. To make the hours with the highest number of sightings look hotter I defined my own color palatte using the RColorBrewer package. With increasing sightings the palette goes from white, through yellow and orange to red having the highest number of sightings.
 
 ```{r}
+heatmap_palette <- colorRampPalette(c("white", "yellow", "orange", "red"))(n = 77)
+palette_breaks <- c(seq(0, 10, length = 10),
+                    seq(11, 30, length = 19),
+                    seq(31, 55, length = 24),
+                    seq(56, 80, length = 24))
+
 ufo_matrix <- data.matrix(ufo_sightings_uk_counts)[, -1]
 rownames(ufo_matrix) <- ufo_sightings_uk_counts$hour
 ufo_uk_sightings <- pheatmap(mat = ufo_matrix, 
@@ -90,11 +97,15 @@ ufo_uk_sightings <- pheatmap(mat = ufo_matrix,
                              cellheight = 15, cellwidth = 30,
                              gaps_row = 6, gaps_col = 5,
                              border_color = 'black',
+                             col = heatmap_palette,
+                             breaks = palette_breaks,
                              legend = FALSE,
-                             main = "UFO sightings in the UK")
+                             main = "UFO sightings in the UK (1943-2014)")
 ```
 
-Finally lets save the heatmap as a png image
+It appears that aliens are more likely to want to visit the UK for a night out, especially on a Saturday night. Look out for unexplained flying objects when you are next on a night out!
+
+Finally lets save the heatmap as a png image.
 
 ```{r}
 save_pheatmap <- function(x, filename, width = 1000, height = 1000, res = 150) {
@@ -105,7 +116,6 @@ save_pheatmap <- function(x, filename, width = 1000, height = 1000, res = 150) {
 }
 save_pheatmap(ufo_uk_sightings, "ufo_uk_sightings.png")
 ```
-
 
 
 

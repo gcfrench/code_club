@@ -17,7 +17,7 @@ library(RColorBrewer)
 ufo_sightings_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-06-25/ufo_sightings.csv")
 ```
 
-First of all I am only interested in UFO sightings in the UK. Filtering on the city_area field produces more sightings than using the country field
+First of all I am only interested in UFO sightings in the UK. Filtering on the city_area field produces more sightings than using the country field.
 
 ```{r}
 ufo_sightings_uk <- ufo_sightings_raw %>% 
@@ -34,14 +34,14 @@ Note I also set the start of the week as Monday rather than Sunday so that Sunda
 ufo_sightings_uk_counts <- ufo_sightings_uk %>% 
   transmute(date_time = parse_date_time(date_time, "mdy HM")) %>% 
   mutate(hour = case_when(
-     am(date_time) ~ str_glue("{hour(date_time)} am"),
-     pm(date_time) ~ str_glue("{hour(date_time) -12} pm"),
+     am(date_time) ~ str_glue("{hour(date_time)}am"),
+     pm(date_time) ~ str_glue("{hour(date_time) -12}pm"),
      TRUE ~ NA_character_
   )) %>% 
   mutate(hour = as.character(hour)) %>%
   mutate(hour = case_when(
-     hour == "0 am" ~ "midnight",
-     hour == "0 pm" ~ "midday",
+     hour == "0am" ~ "midnight",
+     hour == "0pm" ~ "midday",
      TRUE ~ hour
   )) %>% 
   mutate(weekday = wday(date_time, label = TRUE, 
@@ -67,10 +67,10 @@ The data frame is now in the format needed to produce a heatmap, apart from the 
 To order the row going upwards from 1am to midnight I converted the hour column to an orderd factor giving the required order. To make midnight the first row I then had to reverse the order!
 
 ```{r}
-hour_order <- c("1 am", "2 am", "3 am", "4 am", "5 am", "6 am", "7 am", "8 am", 
-                "9 am", "10 am", "11 am", "midday", 
-                "1 pm", "2 pm", "3 pm", "4 pm", "5 pm", "6 pm", "7 pm", "8 pm", 
-                "9 pm", "10 pm", "11 pm", "midnight")
+hour_order <- c("1am", "2am", "3am", "4am", "5am", "6am", "7am", "8am", 
+                "9am", "10am", "11am", "midday", 
+                "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm", 
+                "9pm", "10pm", "11pm", "midnight")
 
 ufo_sightings_uk_counts <- ufo_sightings_uk_counts %>% 
   mutate(hour = factor(hour, levels = hour_order)) %>% 
@@ -116,6 +116,67 @@ save_pheatmap <- function(x, filename, width = 1000, height = 1000, res = 150) {
 }
 save_pheatmap(ufo_uk_sightings, "ufo_uk_sightings.png")
 ```
+
+**So where in the UK is a good place to go on a Saturday night to meet up with extra terrestrials?**
+
+Fortunately all the sightings are associated with a latitude and longitude reference point so each UFO sighting can be plotted on map.
+
+```{r}
+library(sf)
+library(tmap)
+```
+
+First lets add the hour and weekday back into the UK UFO sightings dataframe  and convert it into a spatial dataframe using the sf package. This spatial dataframe can then be split into a Saturday evening and not Saturday evening spatial dataframe and plotted on an interactive leaflet map using the view mode of tmap package
+
+```{r}
+ufo_sightings_uk_spatial <- ufo_sightings_uk %>%
+  mutate(date_time = parse_date_time(date_time, "mdy HM")) %>% 
+  mutate(hour = case_when(
+     am(date_time) ~ str_glue("{hour(date_time)}am"),
+     pm(date_time) ~ str_glue("{hour(date_time) -12}pm"),
+     TRUE ~ NA_character_
+  )) %>% 
+  mutate(hour = as.character(hour)) %>%
+  mutate(hour = case_when(
+     hour == "0 am" ~ "midnight",
+     hour == "0 pm" ~ "midday",
+     TRUE ~ hour
+  )) %>% 
+  mutate(weekday = wday(date_time, label = TRUE, 
+                        week_start = 1)) %>% 
+  select(-state, -country) %>% 
+  st_as_sf(coords = c("longitude", "latitude"),
+           crs = "+proj=longlat +datum=WGS84")
+```
+
+Adding the Saturday evening UFO sightings (red points) and UFO sightings at other times (grey points) shows that they are widely scattered through England, Wales and Southern Scotland. We shall ignore the few points lying outside the UK!
+
+```{r}
+evening <- c("7pm", "8pm", "9pm", "10pm", "11pm", "midnight")
+saturday_evening <- ufo_sightings_uk_spatial %>% 
+           filter(hour %in% evening & weekday == "Sat")
+not_saturday_evening <- ufo_sightings_uk_spatial %>% 
+           filter(!hour %in% evening & weekday != "Sat")
+
+tm <- tm_shape(not_saturday_evening) +
+  tm_dots(col = "grey") +
+  tm_shape(saturday_evening) +
+  tm_dots(col = "red") 
+
+tmap_mode("view")
+tm + tm_view(basemaps = "OpenStreetMap",
+             set.zoom.limits = c(4, 12))
+```
+
+```{r}
+library(rnaturalearth)
+base_map_uk <- ne_countries(type = "countries", country = "united kingdom",
+                            scale = "large", returnclass = "sf")
+```
+
+
+
+
 
 
 

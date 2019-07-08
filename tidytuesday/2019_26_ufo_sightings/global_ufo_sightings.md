@@ -1,38 +1,84 @@
----
-title: TidyTuesday 2019 week 26 Global UFO sightings
-output:
-    md_document:
-      variant: markdown_github
----
-
-```{r}
+``` r
 library(tidyverse)
+```
+
+    ## -- Attaching packages ------------------------ tidyverse 1.2.1 --
+
+    ## v ggplot2 3.2.0     v purrr   0.3.2
+    ## v tibble  2.1.3     v dplyr   0.8.2
+    ## v tidyr   0.8.3     v stringr 1.4.0
+    ## v readr   1.3.1     v forcats 0.4.0
+
+    ## -- Conflicts --------------------------- tidyverse_conflicts() --
+    ## x dplyr::filter() masks stats::filter()
+    ## x dplyr::lag()    masks stats::lag()
+
+``` r
 library(lubridate)
+```
+
+    ## 
+    ## Attaching package: 'lubridate'
+
+    ## The following object is masked from 'package:base':
+    ## 
+    ##     date
+
+``` r
 library(magrittr)
+```
+
+    ## 
+    ## Attaching package: 'magrittr'
+
+    ## The following object is masked from 'package:purrr':
+    ## 
+    ##     set_names
+
+    ## The following object is masked from 'package:tidyr':
+    ## 
+    ##     extract
+
+``` r
 library(pheatmap)
 library(RColorBrewer)
 ```
 
 > This script creates a heatmap of the number of UFO sightings in the UK for each day of the week.
 
-```{r}
+``` r
 ufo_sightings_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-06-25/ufo_sightings.csv")
 ```
 
-First of all I am only interested in UFO sightings in the UK. Filtering on the city_area field produces more sightings than using the country field.
+    ## Parsed with column specification:
+    ## cols(
+    ##   date_time = col_character(),
+    ##   city_area = col_character(),
+    ##   state = col_character(),
+    ##   country = col_character(),
+    ##   ufo_shape = col_character(),
+    ##   encounter_length = col_double(),
+    ##   described_encounter_length = col_character(),
+    ##   description = col_character(),
+    ##   date_documented = col_character(),
+    ##   latitude = col_double(),
+    ##   longitude = col_double()
+    ## )
 
-```{r}
+First of all I am only interested in UFO sightings in the UK. Filtering on the city\_area field produces more sightings than using the country field.
+
+``` r
 ufo_sightings_uk <- ufo_sightings_raw %>% 
   filter(str_detect(city_area, "uk/"))
 ```
 
-This leaves us with 2,354 sightings. I am interested in counting the number of hourly sightings for each day, across all years so need to use the date_time column to extract days and hour columns.
+This leaves us with 2,354 sightings. I am interested in counting the number of hourly sightings for each day, across all years so need to use the date\_time column to extract days and hour columns.
 
 I couldn't find a quick way of converting the hours to 12 hour labels and resorted to using lubridate's am and pm functions, addeing the midnight and midday labels afterwards.
 
-Note I also set the start of the week as Monday rather than Sunday so that Sunday occurs at the end of the week. 
+Note I also set the start of the week as Monday rather than Sunday so that Sunday occurs at the end of the week.
 
-```{r}
+``` r
 ufo_sightings_uk_counts <- ufo_sightings_uk %>% 
   transmute(date_time = parse_date_time(date_time, "mdy HM")) %>% 
   mutate(hour = case_when(
@@ -53,7 +99,7 @@ ufo_sightings_uk_counts <- ufo_sightings_uk %>%
 
 Now to count the number of UFO sightings per hour for each weekday and spread dataset by weekdays
 
-```{r}
+``` r
 ufo_sightings_uk_counts <- ufo_sightings_uk_counts %>%
   group_by_all() %>% 
   tally(name = "ufo_sightings") %>% 
@@ -64,11 +110,22 @@ ufo_sightings_uk_counts <- ufo_sightings_uk_counts %>%
   glimpse()
 ```
 
+    ## Observations: 24
+    ## Variables: 8
+    ## $ hour <chr> "10am", "10pm", "11am", "11pm", "1am", "1pm", "2am", "2pm...
+    ## $ Mon  <int> 6, 46, 9, 28, 16, 6, 13, 5, 8, 8, 5, 9, 2, 4, 3, 18, 2, 1...
+    ## $ Tue  <int> 1, 41, 7, 35, 10, 4, 9, 3, 7, 6, 4, 10, 4, 13, 4, 16, 2, ...
+    ## $ Wed  <int> 1, 44, 3, 39, 10, 0, 8, 5, 8, 5, 6, 7, 2, 10, 1, 17, 3, 1...
+    ## $ Thu  <int> 3, 42, 6, 35, 13, 6, 8, 4, 7, 9, 4, 7, 4, 12, 8, 14, 7, 3...
+    ## $ Fri  <int> 3, 45, 4, 46, 15, 9, 11, 4, 7, 10, 3, 6, 3, 15, 4, 17, 3,...
+    ## $ Sat  <int> 0, 80, 5, 63, 21, 7, 10, 6, 9, 6, 7, 6, 2, 11, 4, 14, 3, ...
+    ## $ Sun  <int> 8, 39, 8, 38, 13, 10, 16, 9, 13, 11, 7, 20, 4, 13, 5, 29,...
+
 The data frame is now in the format needed to produce a heatmap, apart from the ordering of the hours is not what I would like
 
 To order the row going upwards from 1am to midnight I converted the hour column to an orderd factor giving the required order. To make midnight the first row I then had to reverse the order!
 
-```{r}
+``` r
 hour_order <- c("1am", "2am", "3am", "4am", "5am", "6am", "7am", "8am", 
                 "9am", "10am", "11am", "midday", 
                 "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm", 
@@ -82,7 +139,7 @@ ufo_sightings_uk_counts <- ufo_sightings_uk_counts %>%
 
 Now to create the heatmat using the pheatmap package. To make the hours with the highest number of sightings look hotter I defined my own color palatte using the RColorBrewer package. With increasing sightings the palette goes from white, through yellow and orange to red having the highest number of sightings.
 
-```{r}
+``` r
 heatmap_palette <- colorRampPalette(c("white", "yellow", "orange", "red"))(n = 77)
 palette_breaks <- c(seq(0, 10, length = 10),
                     seq(11, 30, length = 19),
@@ -105,11 +162,13 @@ ufo_uk_sightings <- pheatmap(mat = ufo_matrix,
                              main = "UFO sightings in the UK (1943-2014)")
 ```
 
+![](global_ufo_sightings_files/figure-markdown_github/unnamed-chunk-7-1.png)
+
 It appears that aliens are more likely to want to visit the UK for a night out, especially on a Saturday night. Look out for unexplained flying objects when you are next on a night out!
 
 Finally lets save the heatmap as a png image.
 
-```{r}
+``` r
 save_pheatmap <- function(x, filename, width = 1000, height = 1000, res = 150) {
    png(filename, width = width, height = height, res = res)
    grid::grid.newpage()
@@ -119,18 +178,26 @@ save_pheatmap <- function(x, filename, width = 1000, height = 1000, res = 150) {
 save_pheatmap(ufo_uk_sightings, "ufo_uk_sightings.png")
 ```
 
+    ## png 
+    ##   2
+
 **So where in the UK is a good place to go on a Saturday night to meet up with extra terrestrials?**
 
 Fortunately all the sightings are associated with a latitude and longitude reference point so each UFO sighting can be plotted on map.
 
-```{r}
+``` r
 library(sf)
+```
+
+    ## Linking to GEOS 3.6.1, GDAL 2.2.3, PROJ 4.9.3
+
+``` r
 library(tmap)
 ```
 
-First lets add the hour and weekday back into the UK UFO sightings dataframe  and convert it into a spatial dataframe using the sf package. This spatial dataframe can then be split into a Saturday evening and not Saturday evening spatial dataframe and plotted on an interactive leaflet map using the view mode of tmap package
+First lets add the hour and weekday back into the UK UFO sightings dataframe and convert it into a spatial dataframe using the sf package. This spatial dataframe can then be split into a Saturday evening and not Saturday evening spatial dataframe and plotted on an interactive leaflet map using the view mode of tmap package
 
-```{r}
+``` r
 ufo_sightings_uk_spatial <- ufo_sightings_uk %>%
   mutate(date_time = parse_date_time(date_time, "mdy HM")) %>% 
   mutate(hour = case_when(
@@ -153,7 +220,7 @@ ufo_sightings_uk_spatial <- ufo_sightings_uk %>%
 
 Adding the Saturday evening UFO sightings (red points) and UFO sightings at other times (grey points) shows that they are widely scattered through England, Wales and Southern Scotland. We shall ignore the few points lying outside the UK!
 
-```{r eval = FALSE}
+``` r
 evening <- c("7pm", "8pm", "9pm", "10pm", "11pm", "midnight")
 saturday_evening <- ufo_sightings_uk_spatial %>% 
            filter(hour %in% evening & weekday == "Sat")
@@ -170,17 +237,8 @@ tm + tm_view(basemaps = "OpenStreetMap",
              set.zoom.limits = c(4, 12))
 ```
 
-```{r eval = FALSE}
+``` r
 library(rnaturalearth)
 base_map_uk <- ne_countries(type = "countries", country = "united kingdom",
                             scale = "large", returnclass = "sf")
 ```
-
-
-
-
-
-
-
-
-

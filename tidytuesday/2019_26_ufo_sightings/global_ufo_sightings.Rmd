@@ -5,7 +5,7 @@ output:
       variant: markdown_github
 ---
 
-```{r}
+```{r message = FALSE}
 library(tidyverse)
 library(lubridate)
 library(magrittr)
@@ -15,7 +15,7 @@ library(RColorBrewer)
 
 > This script creates a heatmap of the number of UFO sightings in the UK for each day of the week.
 
-```{r}
+```{r message = FALSE}
 ufo_sightings_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-06-25/ufo_sightings.csv")
 ```
 

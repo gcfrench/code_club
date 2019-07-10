@@ -134,11 +134,6 @@ Fortunately all the sightings are associated with a latitude and longitude refer
 
 ``` r
 library(sf)
-```
-
-    ## Linking to GEOS 3.6.1, GDAL 2.2.3, PROJ 4.9.3
-
-``` r
 library(tmap)
 ```
 
@@ -179,10 +174,17 @@ tm <- tm_shape(not_saturday_evening) +
   tm_shape(saturday_evening) +
   tm_dots(col = "red") 
 
+# create a leaflet map with UK view restricting min and max
+# zoom levels and boundary limits
 tmap_mode("view")
 tm + tm_view(basemaps = "OpenStreetMap",
-             set.zoom.limits = c(4, 12))
+             set.view = c(-3L, 55L, 5L),
+             set.bounds = c(-10.85, 49.82, 2.02, 59.47),
+             set.zoom.limits = c(4L, 12L)
+             )
 ```
+
+Initially I was going to produce a static map to plot the UFO sightings and found a useful UK basemap from the rnaturalearth package. In the end I did't use this layer but it may be useful in the future!
 
 ``` r
 library(rnaturalearth)

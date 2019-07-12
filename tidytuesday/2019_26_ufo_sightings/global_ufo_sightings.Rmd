@@ -187,5 +187,3 @@ base_map_uk <- ne_countries(type = "countries", country = "united kingdom",
 
 
 
-
-

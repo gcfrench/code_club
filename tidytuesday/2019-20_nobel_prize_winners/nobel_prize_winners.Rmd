@@ -1,0 +1,39 @@
+---
+title: TidyTuesday 2019 week 20 Nobel Prize Winners
+output:
+    md_document:
+      variant: markdown_github
+---
+
+```{r message = FALSE}
+library(tidyverse)
+library(lubridate)
+library(janitor)
+```
+
+> This script creates creates a ggridge plot of age of nobel prize winners for each category
+
+```{r message = FALSE}
+nobel_winners_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-14/nobel_winners.csv")
+```
+
+Firstly we are only interested in individuals who have won a prize along with the year they won and their date of birth, so that we work out how old they were when they won. We can exclude organisation winners at this stage.
+
+```{r}
+nobel_winners <- nobel_winners_raw %>% 
+  filter(laureate_type == "Individual") %>% 
+  select(prize_year, category, birth_date) 
+```
+
+Lets work out the age each individual was when they won. We only have the year of the prize and so won't worry too much if a person had their birthday before the date in the year, ignoring that we may overestimate their age by a year. Also the few individuals with missing birth dates are removed.
+
+```{r}
+nobel_winners <- nobel_winners %>% 
+  filter(!is.na(birth_date)) %>% 
+  mutate(age = prize_year - year(birth_date)) 
+```
+
+
+
+
+

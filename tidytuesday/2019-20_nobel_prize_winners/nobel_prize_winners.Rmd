@@ -8,6 +8,9 @@ output:
 ```{r message = FALSE}
 library(tidyverse)
 library(lubridate)
+library(ggplot2)
+library(ggridges)
+library(viridis)
 library(janitor)
 ```
 
@@ -25,7 +28,7 @@ nobel_winners <- nobel_winners_raw %>%
   select(prize_year, category, birth_date) 
 ```
 
-Lets work out the age each individual was when they won. We only have the year of the prize and so won't worry too much if a person had their birthday before the date in the year, ignoring that we may overestimate their age by a year. Also the few individuals with missing birth dates are removed.
+Lets work out the age each individual was when they were awarded a Nobel prize. We only have the year of the prize and so won't worry too much if a person had their birthday before the date in the year, ignoring that we may overestimate their age by a year. Also the few individuals with missing birth dates are removed.
 
 ```{r}
 nobel_winners <- nobel_winners %>% 
@@ -33,6 +36,33 @@ nobel_winners <- nobel_winners %>%
   mutate(age = prize_year - year(birth_date)) 
 ```
 
+The range of years for each Nobel proze category can be displayed using a ggridge plot. First lets group the categories so that the science categories are next to each other
+
+```{r}
+categories <- c("Physics", "Chemistry", "Medicine", "Peace", "Literature", "Economics")
+nobel_winners <- nobel_winners %>% 
+  mutate(category = factor(category, levels = categories))
+```
+
+
+```{r}
+ggplot(nobel_winners, aes(x = age, y = category)) +
+  geom_density_ridges2(rel_min_height = 0.01,
+                       scale = 2.4,
+                       center_axis_labels = TRUE) +
+  scale_y_discrete(expand = expand_scale(add = c(0.2, 1.5))) +
+  scale_x_continuous(expand = expand_scale(add = c(0, 0)),
+                     breaks = seq(0, 100, 10)) +
+  theme_minimal() +
+  theme(axis.ticks.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()) +
+  labs(title = "Age range of Nobel Laureates within prize categories",
+       caption = "Kaggle: Nobel Laureates, 1901-Present")
+  
+```
 
 
 

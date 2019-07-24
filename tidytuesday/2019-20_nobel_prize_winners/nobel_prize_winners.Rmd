@@ -36,7 +36,7 @@ nobel_winners <- nobel_winners %>%
   mutate(age = prize_year - year(birth_date)) 
 ```
 
-The range of years for each Nobel proze category can be displayed using a ggridge plot. First lets group the categories so that the science categories are next to each other
+The range of years for each Nobel proze category can be displayed using a ggridge plot. First group the categories so that the science categories are next to each other
 
 ```{r}
 categories <- c("Physics", "Chemistry", "Medicine", "Peace", "Literature", "Economics")
@@ -44,24 +44,40 @@ nobel_winners <- nobel_winners %>%
   mutate(category = factor(category, levels = categories))
 ```
 
-
 ```{r}
-ggplot(nobel_winners, aes(x = age, y = category)) +
+nobel_plot <- ggplot(nobel_winners, aes(x = age, y = category, fill = category)) +
   geom_density_ridges2(rel_min_height = 0.01,
                        scale = 2.4,
-                       center_axis_labels = TRUE) +
-  scale_y_discrete(expand = expand_scale(add = c(0.2, 1.5))) +
-  scale_x_continuous(expand = expand_scale(add = c(0, 0)),
+                       center_axis_labels = TRUE,
+                       colour = 'white',
+                       size = 1) +
+  scale_y_discrete(expand = expand_scale(add = c(0.2, 0.5))) +
+  scale_x_continuous(expand = expand_scale(add = c(0, 5)),
                      breaks = seq(0, 100, 10)) +
-  theme_minimal() +
+  ggthemes::theme_economist() +
   theme(axis.ticks.x = element_blank(),
         axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank()) +
-  labs(title = "Age range of Nobel Laureates within prize categories",
-       caption = "Kaggle: Nobel Laureates, 1901-Present")
-  
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_line(linetype = 2),
+        axis.line.x = element_blank(),
+        axis.text = element_text(size = 20, colour = 'white', face = 'bold'),
+        axis.text.x = element_text(vjust = 2),
+        axis.text.y = element_text(hjust = 1),
+        plot.title = element_text(size = 24, colour = 'white', face = 'italic',
+                                  hjust = -0.4, vjust = -10),
+        plot.subtitle = element_text(size = 16, colour = 'white', face = 'italic',
+                                     hjust = -0.2, vjust = -16),
+        plot.caption = element_text(size = 12, colour = 'white', face = 'italic'),
+        legend.position = "none") +
+  labs(title = "Age ranges of Nobel Laureates",
+       subtitle = "TidyTuesday 2019-05-14",
+       caption = "Kaggle: Nobel Laureates, 1901-Present") +
+  scale_fill_viridis(discrete = TRUE)
+ggsave(filename = "nobel_winners_age.png",
+       plot = nobel_plot,
+       width = 10)
 ```
 
 

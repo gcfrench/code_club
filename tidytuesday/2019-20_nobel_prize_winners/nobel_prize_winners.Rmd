@@ -78,6 +78,10 @@ nobel_plot <- ggplot(nobel_winners, aes(x = age, y = category, fill = category))
        subtitle = "TidyTuesday 2019-05-14",
        caption = "Kaggle: Nobel Laureates, 1901-Present") +
   scale_fill_viridis(discrete = TRUE)
+nobel_plot
+```
+
+```{r}
 ggsave(filename = "nobel_winners_age.png",
        plot = nobel_plot,
        width = 10)

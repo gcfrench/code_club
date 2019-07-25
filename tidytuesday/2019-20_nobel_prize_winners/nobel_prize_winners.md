@@ -76,6 +76,14 @@ nobel_plot <- ggplot(nobel_winners, aes(x = age, y = category, fill = category))
     ## Warning: Ignoring unknown parameters: center_axis_labels
 
 ``` r
+nobel_plot
+```
+
+    ## Picking joint bandwidth of 3.71
+
+![](nobel_prize_winners_files/figure-markdown_github/unnamed-chunk-6-1.png)
+
+``` r
 ggsave(filename = "nobel_winners_age.png",
        plot = nobel_plot,
        width = 10)

@@ -81,8 +81,41 @@ nobel_plot <- ggplot(nobel_winners, aes(x = age, y = category, fill = category))
 nobel_plot
 ```
 
+Trying out additional ggplot themes
+
+```{r eval = FALSE}
+nobel_plot <- ggplot(nobel_winners, aes(x = age, y = category, fill = category)) +
+  geom_density_ridges2(rel_min_height = 0.01,
+                       scale = 2.4,
+                       center_axis_labels = TRUE,
+                       colour = 'white',
+                       size = 1) +
+  scale_y_discrete(expand = expand_scale(add = c(0.2, 0.5))) +
+  scale_x_continuous(expand = expand_scale(add = c(0, 5)),
+                     breaks = seq(0, 100, 10)) +
+  # ggplot2::theme_linedraw() +
+  # ggplot2::theme_classic() +
+  # ggthemes::theme_base() + # base R graphics theme
+  # ggthemes::theme_clean() + # clean ggplot theme
+  # ggthemes::theme_economist_white(gray_bg = FALSE) + # The Economist style
+  # ggthemes::theme_tufte() + # tufte theme
+  # ggthemes::theme_map() + # theme for displaying maps
+  # ggthemes::theme_economist() + # The Economist style
+  # ggthemes::theme_solarized(light = FALSE) + # Solarized palette (dark)
+  # ggthemes::theme_solarized() + # Solarized palette (light)
+  # hrbrthemes::theme_modern_rc() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank()) +  labs(title = "Age ranges of Nobel Laureates",
+       subtitle = "TidyTuesday 2019-05-14",
+       caption = "Kaggle: Nobel Laureates, 1901-Present") +
+  scale_fill_viridis(discrete = TRUE)
+
+ggsave(filename = "hrbrthemes_theme_modern_rc.png",
+       plot = nobel_plot,
+       width = 10)
+```
 ```{r}
-ggsave(filename = "nobel_winners_age.png",
+ggsave(filename = "nobel_prize_winners.png",
        plot = nobel_plot,
        width = 10)
 ```

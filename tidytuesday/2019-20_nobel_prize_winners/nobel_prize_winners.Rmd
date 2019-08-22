@@ -93,10 +93,13 @@ nobel_plot <- ggplot(nobel_winners, aes(x = age, y = category, fill = category))
   scale_y_discrete(expand = expand_scale(add = c(0.2, 0.5))) +
   scale_x_continuous(expand = expand_scale(add = c(0, 5)),
                      breaks = seq(0, 100, 10)) +
-  # ggplot2::theme_linedraw() +
+  ggplot2::theme_linedraw() +
+  # ggdark::dark_theme_linedraw() +
   # ggplot2::theme_classic() +
+  # ggdark::dark_theme_classic() +
   # ggthemes::theme_base() + # base R graphics theme
   # ggthemes::theme_clean() + # clean ggplot theme
+  ggdark::dark_mode(theme_clean()) + # clean ggplot theme
   # ggthemes::theme_economist_white(gray_bg = FALSE) + # The Economist style
   # ggthemes::theme_tufte() + # tufte theme
   # ggthemes::theme_map() + # theme for displaying maps

@@ -1,4 +1,4 @@
-This week I thought I would explore the use of gganimate package to animate a ggplot graph. Connor Rothschild's, a undergraduate at Rice University has created an excellent [TidyTuesday submission](https://connorrothschild.github.io/tidytuesday/2019-10-08/index), producing an animated line graph showing the differences between men and women's heaviest list. This used both the [ggplot2](https://ggplot2.tidyverse.org/) and [gganimate](https://gganimate.com) package so I thought I would work through his code to start to understand how to apply animation to a ggplot.
+This week I thought I would explore the use of gganimate package to animate a ggplot graph. Connor Rothschild's, a undergraduate at Rice University, has created an excellent [TidyTuesday submission](https://connorrothschild.github.io/tidytuesday/2019-10-08/index), producing an animated line graph showing the differences between men and women's heaviest lifts. This used both the [ggplot2](https://ggplot2.tidyverse.org/) and [gganimate](https://gganimate.com) package so I thought I would work through his code to start to understand how to apply animation to a ggplot.
 
 ``` r
 library(tidyverse)
@@ -8,7 +8,7 @@ library(ggdark)
 library(scales)
 ```
 
-Firstly download and format the powerlifting data. This gave me the opportunity to use the recent pivot\_longer and pivot\_wider functions in tidyr to gather and spread the data frame.
+First download and format the powerlifting data. This gave me the opportunity to use the recent pivot\_longer and pivot\_wider functions in tidyr to gather and spread the data frame.
 
 ``` r
 # Download powerlifting data
@@ -58,7 +58,7 @@ max_lifts_final <- max_lifts %>%
                           lift == "best3deadlift_kg" ~ "Deadlift")) 
 ```
 
-Before using animation I created a static ggplot graph depicting the difference between the heaviest lifts for each sex at International Powerlifting Federation events over time
+Before using animation create a static ggplot graph depicting the difference between the heaviest lifts for each sex at International Powerlifting Federation events over time.
 
 ``` r
 lift_colours <- c("#FFC125", "#CD5B45", "#8B2323")
@@ -102,7 +102,7 @@ graph_lift_diff
 
 To change this graph to an animated graph elements that are displayed across years are added to the graph. These can then be revealed by year so that the elements appear to move over time.
 
-So I added points to each lift for each year, a dashed arrow added pointing to each of these points and a label describing the lift type added at the end of the arrow. The legend is removed as it is no longer required and the x axis is also extended to accomodate the labels on the right
+Add points to each lift for each year, a dashed arrow added pointing to each of these points and a label describing the lift type added at the end of the arrow. Remove the legend as it is no longer required and the x axis is also extended to accomodate the labels on the right.
 
 ``` r
 graph_lift_diff_yearly <- graph_lift_diff + 
@@ -127,7 +127,7 @@ graph_lift_diff_yearly
 
 ![](powerlifting_files/figure-markdown_github/list_diff_yearly_plot-1.png)
 
-Now that the graph is ready I can apply the animation
+The graph is now ready to apply the animation.
 
 ``` r
 animation <- graph_lift_diff_yearly +
